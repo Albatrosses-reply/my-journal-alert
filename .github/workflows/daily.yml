@@ -1,0 +1,45 @@
+name: ② 논문 알림 (매일)
+
+on:
+  schedule:
+    - cron: "30 20 * * *"   # 매일 한국시간 05:30 (UTC 20:30)
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "조회 기간(일). 비워 두면 설정값(10일)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # data/seen.json(이미 보낸 논문 목록) 저장
+  issues: write     # 결과를 Issue로 게시
+
+concurrency:
+  group: journal-alert
+  cancel-in-progress: false
+
+jobs:
+  run:
+    # 원본 템플릿 저장소에서는 예약 실행을 하지 않는다(복사한 내 저장소에서만)
+    if: github.event_name != 'schedule' || !github.event.repository.is_template
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 수집하고 Issue 올리기
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELSEVIER_API_KEY: ${{ secrets.ELSEVIER_API_KEY }}
+          S2_API_KEY: ${{ secrets.S2_API_KEY }}
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+          DAYS: ${{ inputs.days }}
+        run: python run.py ${DAYS:+--days "$DAYS"}
+      - name: 보낸 논문 목록 저장
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seen.json
+          git diff --cached --quiet || { git commit -m "seen: $(date -u +%F)"; git push; }

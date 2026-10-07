@@ -1,0 +1,16 @@
+# 내 알림 설정. Actions → '① 설정' 실행 버튼으로 바꾸면 이 파일이 자동으로 다시 쓰인다. 직접 고쳐도 된다.
+
+# 받을 저널 묶음 (journals.toml의 groups 이름)
+groups = ["realestate_core", "realestate_ext"]
+
+# 관심 키워드. 제목·초록에 있으면 ⭐ 표시하고 위로 올린다. 끝에 *를 붙이면 앞부분 일치 (예: hous* → housing, house)
+keywords = ["housing", "rent*", "mortgage*", "house price*", "zoning"]
+
+# 이 묶음은 키워드에 맞는 논문만 보낸다 (분야가 넓은 경제·재무·경영 저널용)
+keyword_only_groups = []
+
+# 마법사에서 추가한 저널 (이름·ISSN으로 찾은 결과)
+extra_journals = []
+
+# 매 실행마다 최근 며칠을 다시 조회할지. 이미 보낸 논문은 다시 보내지 않는다
+lookback_days = 10

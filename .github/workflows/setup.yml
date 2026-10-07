@@ -1,0 +1,67 @@
+name: ① 설정
+
+on:
+  workflow_dispatch:
+    inputs:
+      realestate:
+        description: "부동산 저널"
+        type: choice
+        options: ["핵심+확장", "핵심만", "안 받음"]
+        default: "핵심+확장"
+      economics:
+        description: "경제학 주요 저널 (AER·QJE·JPE 등 10종)"
+        type: boolean
+        default: false
+      finance:
+        description: "재무 주요 저널 (JF·JFE·RFS 등 5종)"
+        type: boolean
+        default: false
+      management:
+        description: "경영·경영정보 주요 저널 (MS·ISR·MISQ 등 5종)"
+        type: boolean
+        default: false
+      keyword_filter:
+        description: "경제·재무·경영 저널은 키워드에 맞는 논문만 받기"
+        type: boolean
+        default: true
+      keywords:
+        description: "관심 키워드 (쉼표로 구분, 영어). 예: housing, rent*, mortgage*"
+        type: string
+        default: "housing, rent*, mortgage*, house price*, real estate, zoning"
+      extra_journals:
+        description: "추가 저널 (쉼표로 구분, 영문 이름이나 ISSN). 예: Journal of Regional Science, 0042-0980"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  actions: write   # 설정이 끝나면 첫 알림을 바로 실행
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 설정 파일 쓰기
+        env:   # 입력값은 환경변수로만 넘긴다(명령어에 직접 넣지 않음)
+          REALESTATE: ${{ inputs.realestate }}
+          ECONOMICS: ${{ inputs.economics }}
+          FINANCE: ${{ inputs.finance }}
+          MANAGEMENT: ${{ inputs.management }}
+          KEYWORD_FILTER: ${{ inputs.keyword_filter }}
+          KEYWORDS: ${{ inputs.keywords }}
+          EXTRA_JOURNALS: ${{ inputs.extra_journals }}
+        run: python setup.py
+      - name: 저장
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add alert.toml
+          git diff --cached --quiet || { git commit -m "설정 변경"; git push; }
+      - name: 첫 알림 실행
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run daily.yml --ref "${GITHUB_REF_NAME}"
